@@ -123,6 +123,25 @@ Chain semantics (see the permission system's `configuration.md`):
   `pi-permission-system-permission-review.jsonl` (`auto_judge_verdict`)
   for auditing.
 
+## Analyzing the review log
+
+`analyze-permissions.mjs` turns the review log into a one-page report — no
+dependencies, just Node:
+
+```sh
+node analyze-permissions.mjs   # default log path; or pass the log explicitly:
+node analyze-permissions.mjs ~/.pi/agent/extensions/pi-permission-system/logs/pi-permission-system-permission-review.jsonl
+```
+
+It writes `permission-report.html` in the current directory (open it in a
+browser) and prints a summary: per-day barcode timeline of asks and decisions
+(color = outcome, ring = judged, lower diamonds = judge calls), decisions by
+kind and by tool, judge verdict counts, and a verdict trail with the model's
+reasons.
+
+Judge calls are matched to asks by time proximity (±15s), not `requestId` —
+judge log events carry no requestId — so a match is a strong hint, not a proof.
+
 ## Project layout
 
 ```
@@ -130,6 +149,7 @@ config.json          # default configuration template
 src/index.ts         # extension activation; registers "auto-judge" on permissions:ready
 src/config.ts        # config resolution: project-local → global → defaults
 src/judge.ts         # prompt construction, LLM call with AbortController timeout, fail-safe defer
+analyze-permissions.mjs  # review-log analyzer → permission-report.html
 test.ts              # smoke tests: npx node --experimental-strip-types test.ts
 ```
 
