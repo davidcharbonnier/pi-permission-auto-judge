@@ -1,0 +1,10 @@
+{
+  "provider": "openrouter",
+  "model": "google/gemma-4-26b-a4b-it:free",
+  "timeoutMs": 4000,
+  "options": {
+    "temperature": 0,
+    "maxTokens": 150,
+    "reasoningEffort": "none"
+  }
+}
