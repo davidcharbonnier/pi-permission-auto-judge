@@ -18,6 +18,8 @@ import { evaluateRequest } from "./judge.ts";
 export default function (pi: ExtensionAPI) {
 	const unregisters = new Map<string, () => void>();
 	const pending = new Set<string>();
+	// Sessions whose shutdown already ran — a poll still in flight must not register them.
+	const dead = new Set<string>();
 	const config = loadConfig();
 	// Session's active model — the judge's fallback when config has no explicit model.
 	let sessionModel: Model<Api> | undefined;
@@ -31,6 +33,7 @@ export default function (pi: ExtensionAPI) {
 				// Service publication races extension load — poll rather than trusting a
 				// further `permissions:ready` emission that may never come.
 				for (let i = 0; i < 30; i++) {
+					if (dead.has(sessionId)) return;
 					const service = getPermissionsService(sessionId);
 					if (service) {
 						// A re-published service (reload) lost our link — unregister ours first, always re-register.
@@ -74,6 +77,7 @@ export default function (pi: ExtensionAPI) {
 	pi.on("session_shutdown", (_event, ctx) => {
 		const sessionId = ctx.sessionManager.getSessionId();
 		if (!sessionId) return;
+		dead.add(sessionId);
 		unregisters.get(sessionId)?.();
 		unregisters.delete(sessionId);
 	});

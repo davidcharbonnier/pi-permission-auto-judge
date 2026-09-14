@@ -5,14 +5,14 @@
 // Writes permission-report.html next to the log (or in cwd) and prints a summary.
 
 import { readFileSync, writeFileSync } from "node:fs";
-import { basename, dirname, join } from "node:path";
+import { basename, join } from "node:path";
 
 const DEFAULT_LOG = join(
 	process.env.HOME ?? "",
 	".pi/agent/extensions/pi-permission-system/logs/pi-permission-system-permission-review.jsonl",
 );
 const logPath = process.argv[2] ?? DEFAULT_LOG;
-const outPath = join(dirname(logPath) === process.cwd() ? "." : process.cwd(), "permission-report.html");
+const outPath = join(process.cwd(), "permission-report.html");
 
 const JUDGE_WINDOW_MS = 15_000; // judge event matched to nearest ask within this window
 
