@@ -1,0 +1,28 @@
+{
+	"name": "pi-permission-auto-judge",
+	"version": "0.1.0",
+	"description": "Model-based authorizer chain link for @gotgenes/pi-permission-system — a lightweight LLM judges `ask` requests before they reach the human prompt.",
+	"type": "module",
+	"license": "MIT",
+	"keywords": ["pi-package", "pi", "pi-extension", "pi-coding-agent", "permissions", "authorizer", "security"],
+	"pi": {
+		"extensions": ["./src/index.ts"]
+	},
+	"scripts": {
+		"typecheck": "tsc --noEmit",
+		"test": "node --experimental-strip-types test.ts"
+	},
+	"files": ["src", "config.json", "README.md"],
+	"dependencies": {
+		"@gotgenes/pi-permission-system": "^32.0.2"
+	},
+	"bundledDependencies": ["@gotgenes/pi-permission-system"],
+	"peerDependencies": {
+		"@earendil-works/pi-ai": "*",
+		"@earendil-works/pi-coding-agent": "*"
+	},
+	"devDependencies": {
+		"@earendil-works/pi-ai": "^0.85.1",
+		"typescript": "^5.9.3"
+	}
+}
