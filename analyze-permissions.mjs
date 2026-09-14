@@ -29,6 +29,15 @@ const entries = readFileSync(logPath, "utf8")
 	.filter(Boolean);
 
 const t = (e) => new Date(e.timestamp).getTime();
+/** Local calendar day + local ms-of-day (log timestamps are UTC; humans are not). */
+const localDay = (iso) => {
+	const d = new Date(iso);
+	return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+const localPct = (iso) => {
+	const d = new Date(iso);
+	return ((d.getHours() * 3600 + d.getMinutes() * 60 + d.getSeconds()) * 1000 + d.getMilliseconds()) / 86_400_000;
+};
 
 // --- Asks: waiting/prompted paired with their resolution by requestId -------
 const WAITING = new Set(["permission_request.waiting", "forwarded_permission.prompted"]);
@@ -108,8 +117,7 @@ Report: ${outPath}
 // --- Standalone HTML report --------------------------------------------------
 const DAYS = Object.entries(
 	asks.reduce((m, a) => {
-		const day = a.timestamp.slice(0, 10);
-		(m[day] ??= []).push(a);
+		(m[localDay(a.timestamp)] ??= []).push(a);
 		return m;
 	}, {}),
 ).sort(([a], [b]) => (a < b ? -1 : 1));
@@ -129,7 +137,7 @@ const fmtTime = (iso) => new Date(iso).toLocaleTimeString([], { hour: "2-digit",
 const dayRows = DAYS.map(([day, dayAsks]) => {
 	const dots = dayAsks
 		.map((a) => {
-			const pct = ((t(a) % 86_400_000) / 86_400_000) * 100;
+			const pct = localPct(a.timestamp) * 100;
 			const judge = a.judge
 				? ` <b style="color:${JUDGE_COLOR[a.judge.verdict.split(" ")[0]] ?? JUDGE_COLOR.defer}">judge: ${esc(a.judge.verdict)}</b> — ${esc(a.judge.text)} <i>(${esc(a.judge.model ?? "")})</i>`
 				: "";
@@ -140,7 +148,7 @@ const dayRows = DAYS.map(([day, dayAsks]) => {
 	const judgeDots = dayAsks
 		.filter((a) => a.judge)
 		.map((a) => {
-			const pct = ((t(a.judge) % 86_400_000) / 86_400_000) * 100;
+			const pct = localPct(a.judge.timestamp) * 100;
 			return `<span class="jtick" style="left:${pct}%;background:${JUDGE_COLOR[a.judge.verdict.split(" ")[0]] ?? JUDGE_COLOR.defer}" title="judge ${esc(a.judge.verdict)} — ${esc(a.judge.text)}"></span>`;
 		})
 		.join("");
@@ -157,7 +165,7 @@ const bar = (m, color) => {
 		.sort(([, a], [, b]) => b - a)
 		.map(
 			([k, v]) =>
-				`<div class="bar-row"><span class="bar-label">${esc(k)}</span><span class="bar" style="width:${(100 * v) / max}%;background:${color}"></span><span class="bar-n">${v}</span></div>`,
+				`<div class="bar-row"><span class="bar-label">${esc(k)}</span><span class="bar-wrap"><span class="bar" style="width:${(100 * v) / max}%;background:${color}"></span></span><span class="bar-n">${v}</span></div>`,
 		)
 		.join("");
 };
@@ -171,7 +179,8 @@ const html = `<!doctype html>
   .grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:0 40px; }
   .bar-row { display:flex; align-items:center; margin:3px 0; }
   .bar-label { width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#9aa4b2; flex:none; }
-  .bar { height:12px; border-radius:2px; flex:none; } .bar-n { margin-left:8px; }
+  .bar { height:12px; border-radius:2px; flex:none; } .bar-n { margin-left:8px; flex:none; }
+  .bar-wrap { flex:1; min-width:0; display:flex; }
   table { border-collapse:collapse; margin-top:8px; width:100%; table-layout:fixed; } td,th { text-align:left; padding:2px 12px 2px 0; vertical-align:top; overflow-wrap:anywhere; }
   th { color:#9aa4b2; font-weight:400; } .allow{color:#4ade80}.deny{color:#f87171}.defer{color:#eab308}
   td.wide { width:auto; } td.t { width:70px; flex:none; } td.m { width:220px; color:#5c6672; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }

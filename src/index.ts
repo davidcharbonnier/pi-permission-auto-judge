@@ -28,16 +28,24 @@ export default function (pi: ExtensionAPI) {
 		void (async () => {
 			try {
 				const { getPermissionsService } = await import("@gotgenes/pi-permission-system");
-				const service = getPermissionsService(sessionId);
-				if (!service) return; // published later — next ready emission retries
-				// A re-published service (reload) lost our link — unregister ours first, always re-register.
-				unregisters.get(sessionId)?.();
-				unregisters.set(
-					sessionId,
-					service.registerAuthorizer("auto-judge", (details, _query, log) =>
-						evaluateRequest(details, config, sessionModel, log),
-					),
-				);
+				// Service publication races extension load — poll rather than trusting a
+				// further `permissions:ready` emission that may never come.
+				for (let i = 0; i < 30; i++) {
+					const service = getPermissionsService(sessionId);
+					if (service) {
+						// A re-published service (reload) lost our link — unregister ours first, always re-register.
+						unregisters.get(sessionId)?.();
+						unregisters.set(
+							sessionId,
+							service.registerAuthorizer("auto-judge", (details, _query, log) =>
+								evaluateRequest(details, config, sessionModel, log),
+							),
+						);
+						return;
+					}
+					await new Promise((r) => setTimeout(r, 500));
+				}
+				pi.events.emit("auto-judge:register_failed", { sessionId, error: "service not published after 15s" });
 			} catch (err) {
 				// Permission system not installed or name taken — degrade silently;
 				// the human prompt is the fallback either way. Next ready retries.
