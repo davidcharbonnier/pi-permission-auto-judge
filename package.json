@@ -14,7 +14,7 @@
 	},
 	"files": ["src", "config.json", "README.md"],
 	"dependencies": {
-		"@gotgenes/pi-permission-system": "^32.0.2"
+		"@gotgenes/pi-permission-system": "^40.0.2"
 	},
 	"bundledDependencies": ["@gotgenes/pi-permission-system"],
 	"peerDependencies": {
@@ -22,7 +22,7 @@
 		"@earendil-works/pi-coding-agent": "*"
 	},
 	"devDependencies": {
-		"@earendil-works/pi-ai": "^0.85.1",
-		"typescript": "^5.9.3"
+		"@earendil-works/pi-ai": "^1.0.4",
+		"typescript": "^7.0.2"
 	}
 }
